@@ -30,5 +30,5 @@ Thumbs.db
 
 # Project-specific
 # - ignore all txt files in docuemnts directory EXCEPT samples
-!documents/*.txt
+documents/*.txt
 !documents/sample*.txt
