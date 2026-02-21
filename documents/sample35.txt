@@ -1,0 +1,1 @@
+sample added to check ruff import quickfix since it didn't let me commit the auto ruff changes.
