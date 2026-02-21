@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+@author: FIXME: Your name here
+Seattle University, ARIN 5360
+@see: https://catalog.seattleu.edu/preview_course_nopop.php?catoid=55&coid=190380
+@version: 2.0.0+w26
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2 Document Retrieval System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h1>Lab 4: Document Retrieval System</h1>
+    <p style="text-align: center; color: #666;">
+        Semantic search using ChromaDB and sentence transformers
+    </p>
+
+    <!-- Health section -->
+    <div class="health-section">
+        <!-- Display server health status -->
+        <button id="healthButton" onclick="displayHealth()">How am I feeling?</button>
+        <div id="health-status">Not sure right now</div>
+    </div>
+
+    <!-- Search section -->
+    <div class="search-section">
+        <input type="text" id="queryInput" placeholder="Enter your search query..."/>
+        <button id="searchButton" onclick="performSearch()">Search</button>
+    </div>
+
+    <!-- Results section -->
+    <div id="results"></div>
+</div>
+
+<script>
+    async function performSearch() {
+        const query = document.getElementById('queryInput').value;
+        const resultsDiv = document.getElementById('results');
+
+        if (!query.trim()) {
+            resultsDiv.innerHTML = '<p class="error">Please enter a search query</p>';
+            return;
+        }
+
+        resultsDiv.innerHTML = '<p class="loading">Searching...</p>';
+
+        try {
+            const response = await fetch('http://localhost:8000/search', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({query: query, n_results: 5})
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                resultsDiv.innerHTML = `<p class="error">Error: ${data.detail}</p>`;
+                return;
+            }
+
+            if (data.results.length === 0) {
+                resultsDiv.innerHTML = '<p class="no-results">No results found</p>';
+                return;
+            }
+
+            let html = `<h2>Results for "${data.query}"</h2>`;
+            html += '<div class="results-list">';
+
+            data.results.forEach((result, idx) => {
+                html += `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-rank">#${idx + 1}</span>
+                            <span class="result-id">${result.id}</span>
+<!--                            <span class="result-score">Score: ${result.distance.toFixed(3)}</span>-->
+                        </div>
+                        <div class="result-text">${result.text}</div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+
+        } catch (error) {
+            resultsDiv.innerHTML = `<p class="error">Failed to connect to server</p>`;
+        }
+    }
+
+    // Get health status from the server and show it in the health-status div
+    async function displayHealth() {
+        try {
+            const result = document.getElementById('health-status');
+            result.innerHTML = `<p>Hmm...let me see</p>`;
+            const response = await fetch('http://localhost:8000/health');
+            const data = await response.json();
+            result.innerHTML = `
+                <p>${data.status} - ${data.documents_indexed} chunks indexed</p>
+                <p>${data.message}</p>
+            `;
+        } catch (error) {
+            document.getElementById('health-status').textContent = 'Error fetching health status';
+        }
+    }
+
+    // Allow the Enter key to trigger search
+    document.getElementById('queryInput').addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            performSearch();
+        }
+    });
+
+</script>
+</body>
+</html>
