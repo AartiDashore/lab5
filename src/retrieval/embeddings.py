@@ -8,9 +8,9 @@ Seattle University, ARIN 5360
 @version: 4.0.0+w26
 """
 
+
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import json
 
 
 class DocumentEmbedder:

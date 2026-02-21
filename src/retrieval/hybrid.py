@@ -7,7 +7,7 @@ Seattle University, ARIN 5360
 """
 
 from collections import defaultdict
-from typing import Optional, Tuple
+from typing import Optional
 
 from rank_bm25 import BM25Okapi
 
