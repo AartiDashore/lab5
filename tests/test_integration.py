@@ -29,7 +29,7 @@ def query_tester(client, query, expected_file):
     assert data["query"] == query
     assert data["count"] == 1
     assert len(data["results"]) == 1
-    assert data["results"][0]["metadata"]["filename"].endswith((".txt",".pdf"))
+    assert data["results"][0]["metadata"]["filename"].endswith((".txt", ".pdf"))
 
 
 def test_some_queries(client):
