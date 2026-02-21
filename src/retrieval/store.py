@@ -108,6 +108,6 @@ class VectorStore:
 
         return formatted
 
-    def count(self) -> str:
+    def count(self) -> int:
         """Return the number of documents in the store."""
         return self.collection.count()
