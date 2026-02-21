@@ -22,6 +22,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.19.1",
     "pytest>=9.0.0",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.4",
@@ -45,3 +46,7 @@ ignore = ["E501"]           # Formatter handles line length
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["F401"]        # Allow unused imports in tests
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
