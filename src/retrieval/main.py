@@ -7,8 +7,8 @@ Seattle University, ARIN 5360
 @version: 2.0.0+w26
 """
 
-import os
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
