@@ -7,6 +7,7 @@ Seattle University, ARIN 5360
 @version: 2.0.0+w26
 """
 
+import os
 import logging
 from contextlib import asynccontextmanager
 
@@ -59,7 +60,8 @@ async def lifespan(_app: FastAPI):
         # Index documents from the documents/ directory
         global retriever
         retriever = DocumentRetriever()
-        num_docs = retriever.index_documents("documents")
+        docs_dir = "tests/data" if "PYTEST_CURRENT_TEST" in os.environ else "documents"
+        num_docs = retriever.index_documents(docs_dir)
         logger.info(f"Indexed {num_docs} chunks successfully!")
     except Exception as e:
         # Don't crash the server, but log the error

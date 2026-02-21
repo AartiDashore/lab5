@@ -63,6 +63,8 @@ class BM25Searcher:
         for idx in top_indices:
             if scores[idx] > 0:  # Only include documents with non-zero scores
                 doc = self.documents[idx].copy()
+                score = float(scores[idx])
+                doc["score"] = score
                 doc["bm25_score"] = float(scores[idx])
                 results.append(doc)
 
