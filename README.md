@@ -147,6 +147,31 @@ uv run ruff check .
 ```
 ---
 
+## Secrets Management with .env Files
+
+For our project, we have 3 files that works together for managing the secrets:
+- `.env` : This is our local configuration file that contains which port to run on, API keys, or which LLM model to use etc. It is never committed to Git as it contains sensitive information and only resides in our local machine at the root of the project.
+- `.env.example` : This file is a template (also present at root) that is pushed to Git and contains placeholder or default values instead of real secrets to other developers that what variables are needed. When someone clones the repo, they run and fill their own values.
+- `config.py` : It is a python file that reads the `.env` and make those values available to the code. It is present in the /src/retrieval folder.
+
+```config.py:
+from dotenv import load_dotenv
+load_dotenv()  # reads the .env file
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://localhost:11434")
+```
+
+To install dotenv dependency, run: `uv add python-dotenv`
+
+The `load_dotenv()` call reads .env and loads it into environment variables. Then `os.getenv()` retrieves each value, with a fallback default if it is not set.
+
+The `.gitignore` file makes sure that except .env file, rest other files gets pushed to Git.
+# Add to your .gitignore
+```bash
+.env
+*.env
+!.env.example
+```
+
 ## Run CI Checks Locally
 
 The CI pipeline runs the following checks. you can run them locally before pushing.
