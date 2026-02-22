@@ -1,3 +1,6 @@
+// Store searches in memory (clears on page refresh)
+let questionHistory = [];
+let currentResults = [];  // Track current results for export
 
     async function performSearch() {
         const query = document.getElementById('queryInput').value;
@@ -42,11 +45,12 @@
         document.getElementById('metricTime').textContent = elapsed + 's';
         document.getElementById('metricsSection').style.display = 'flex';
 
-        addToHistory(query, data.results.length, elapsed);
-        lastResults = data.results;
-
         console.log(data.results[0]);
         displayResults(data.results);
+
+        // Store results and add to history
+        currentResults = data.results;
+        addToHistory(query, data.results);
 
         } catch (error) {
             resultsDiv.innerHTML = `<p class="error">Failed to connect to server</p>`;
@@ -88,28 +92,10 @@ function addToHistory(query, count, time) {
     `).join('');
 }
 
-function clearHistory() {
-    searchHistory = [];
-    document.getElementById('historyList').innerHTML = '<div class="empty-state">No searches yet</div>';
-}
 
 function reloadSearch(query) {
     document.getElementById('queryInput').value = query;
     performSearch();
-}
-
-function exportResults() {
-    if (lastResults.length === 0) {
-        alert('No results to export');
-        return;
-    }
-    const blob = new Blob([JSON.stringify(lastResults, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'results.json';
-    a.click();
-    URL.revokeObjectURL(url);
 }
 
 /**
@@ -160,4 +146,109 @@ function displayResults(results) {
     });
 
     resultsDiv.innerHTML = html;
+}
+
+/**
+ * Add a search to the history
+ */
+function addToHistory(question, results) {
+    questionHistory.push({
+        question: question,
+        results: results,
+        count: results.length,
+        timestamp: new Date()
+    });
+    renderHistory();
+}
+
+/**
+ * Render the history list in the left panel
+ */
+function renderHistory() {
+    const historyList = document.getElementById('historyList');
+
+    if (questionHistory.length === 0) {
+        historyList.innerHTML = '<div class="empty-state">No searches yet</div>';
+        return;
+    }
+
+    // Display newest first (reverse order)
+    const html = questionHistory.map((entry, index) => {
+        // Truncate long questions
+        const displayQuestion = entry.question.length > 100
+            ? entry.question.substring(0, 100) + '...'
+            : entry.question;
+
+        return `
+            <div class="history-item" onclick="loadHistoryItem(${index})">
+                <div class="history-question">${escapeHtml(displayQuestion)}</div>
+                <div class="history-meta">
+                    <span>${entry.count} results</span>
+                    <span>${entry.timestamp.toLocaleTimeString()}</span>
+                </div>
+            </div>
+        `;
+    }).reverse().join('');
+
+    historyList.innerHTML = html;
+}
+
+/**
+ * Load a previous search from history
+ */
+function loadHistoryItem(index) {
+    const entry = questionHistory[index];
+
+    // Restore the query to the input
+    document.getElementById('queryInput').value = entry.question;
+
+    // Update current results for export
+    currentResults = entry.results;
+
+    // Display the results
+    displayResults(entry.results);
+}
+
+/**
+ * Clear all search history
+ */
+function clearHistory() {
+    if (confirm('Clear all search history?')) {
+        questionHistory = [];
+        currentResults = [];
+        renderHistory();
+
+        // Reset results display
+        document.getElementById('results').innerHTML =
+            '<div class="empty-state">Enter a query to search</div>';
+    }
+}
+
+
+/**
+ * Export current results as JSON file
+ */
+function exportResults() {
+    if (currentResults.length === 0) {
+        alert('No results to export. Perform a search first.');
+        return;
+    }
+
+    // Create JSON string with nice formatting
+    const dataStr = JSON.stringify(currentResults, null, 2);
+
+    // Create blob and download link
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    // Create temporary link and trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `search-results-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Clean up
+    URL.revokeObjectURL(url);
 }
