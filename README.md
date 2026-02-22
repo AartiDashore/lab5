@@ -56,6 +56,12 @@ The web interface provides a expanded front end for submitting queries and viewi
 # Install dependencies
 uv sync
 ```
+
+### Environment Variables
+
+
+
+
 ### Checking Out Assignment Code
 
 Each assignment corresponds to a version tag:
@@ -139,6 +145,30 @@ uv run ruff format .
 # Lint
 uv run ruff check .
 ```
+---
+
+## Run CI Checks Locally
+
+The CI pipeline runs the following checks. you can run them locally before pushing.
+
+uv run ruff check .
+uv run ruff format --check.
+uv run pyest
+
+
+
+## CI Pipeline
+
+This project uses GitHub Actions for continuous integration.  
+On each push and pull request, the workflow:
+
+1. Installs dependencies  
+2. Runs Ruff lint and formatting checks  
+3. Runs the pytest test suite  
+
+A passing workflow indicates all code quality and test checks succeeded.
+
+---
 
 ## Project Structure
 
