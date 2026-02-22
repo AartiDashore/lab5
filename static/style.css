@@ -98,3 +98,317 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/*
+ * Lab 5 Section 2.1: Three-Panel Layout Styles
+ * Append this to your existing style.css
+ */
+
+/* ===== MAIN LAYOUT ===== */
+.main-container {
+    display: grid;
+    grid-template-columns: 300px 1fr 400px;
+    gap: 1rem;
+    height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+/* Responsive: Stack vertically on smaller screens */
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .panel {
+        max-height: 500px;
+    }
+}
+
+/* ===== PANEL BASE STYLES ===== */
+.panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-color);
+}
+
+/* ===== LEFT PANEL: HISTORY ===== */
+.history-panel {
+    min-width: 250px;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* TODO 2.3: Students will add .history-item styles here */
+
+.history-item {
+    padding: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    border: 1px solid transparent;
+    transition: background 0.15s;
+}
+
+.history-item:hover {
+    background: #f0f4ff;
+    border-color: #c7d2fe;
+}
+
+.history-quert {
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-meta {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 0.25rem;
+}
+
+/* ===== CENTER PANEL: SEARCH ===== */
+.search-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.search-panel h1 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.health-section {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+#health-status {
+    margin-top: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.search-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#queryInput {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+#queryInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+#searchButton {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+}
+
+/* TODO 2.4: Students will add .search-controls and .metrics-section styles here */
+
+.search-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f8f9ff;
+    border: 1px solid #e0e4ff;
+    border-radius: 6px;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    accent-color: var(--primary-color);
+    width: 15px;
+    height: 15px;
+}
+
+.n-results-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+#nResults {
+    width: 65px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    text-align: center;
+}
+
+
+/*Metrics section styles */
+
+.metrics-section {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.metric{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.metric-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #16a34a;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ===== RIGHT PANEL: RESULTS ===== */
+.results-panel {
+    min-width: 350px;
+}
+
+.results-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* TODO 2.2: Students will add .result-card styles here */
+    .result-card {
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: box-shadow 0.2s;
+    }
+    .result-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .result-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .result-card-title {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .result-score {
+        font-size: 0.85rem;
+        background: #ede9fe;
+        color: #6d28d9;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .results-source {
+        font-size: 0.8rem;
+        color: #6366f1;
+        margin-bottom: 0.5rem;
+    }
+
+    .result-snippet {
+        font-size: 0.9rem;
+        color: #555;
+        line-height: 1.5;
+    }
+
+    .result-rank {
+        font-size: 0.75rem;
+        color: #aaa;
+        text-align: right;
+        margin-top: 0.5rem;
+    }
+
+
+/* ===== UTILITY STYLES ===== */
+.btn-small {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    margin-top: 0;
+}
+
+.empty-state {
+    text-align: center;
+    color: #9ca3af;
+    padding: 2rem;
+    font-style: italic;
+}
+
+.loading {
+    text-align: center;
+    color: var(--primary-color);
+    padding: 2rem;
+}
+
+.error {
+    text-align: center;
+    color: #dc2626;
+    padding: 1rem;
+    background-color: #fef2f2;
+    border-radius: 6px;
+}
