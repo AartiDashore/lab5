@@ -1,7 +1,10 @@
-# P2: Document Retrieval System
+[![CI](https://github.com/AartiDashore/lab5/actions/workflows/ci.yml/badge.svg)](https://github.com/AartiDashore/lab5/actions/workflows/ci.yml)
+# Lab 5: CI/CD Pipeline & Web Interface
 
-Semantic search system using ChromaDB and sentence transformers<br>for [ARIN 5360 at Seattle University](https://catalog.seattleu.edu/preview_course_nopop.php?catoid=55&coid=190380)
-Includes chunking and support for PDF files.
+This lab extends the document retrieval system with an automated CI/CD pipeline.
+Interactive Github actions are used to enforce code quality and reliability.
+This is done by automated testing and linting.
+The web interface provides a expanded front end for submitting queries and viewing and exporting retrieval results.
 
 ## Feature Progression
 
@@ -15,7 +18,14 @@ Includes chunking and support for PDF files.
 | **Keyword search (BM25)** | ❌ | ❌ | ✅* |
 | **Hybrid search (RRF)** | ❌ | ❌ | ✅* |
 
-*\*Extra credit in P2*
+
+### New Features in Lab 5
+
+
+- **CI/CD Pipeline**: GitHub Actions workflow automatically runs Ruff linting/format checks and pytest on each push and pull request
+- **Web Interface**: Browser-based UI for submitting queries and viewing ranked retrieval results
+- **Automated Quality Checks**: Ensures code style, formatting, and tests pass before integration
+- **End-to-End Interaction**: Connects user input -> API -> retrieval pipeline -> displayed results
 
 ### New Features in P2 _(Extra Credit)_
 
@@ -133,8 +143,16 @@ uv run ruff check .
 ## Project Structure
 
 ```
-p2/
+lab5/
+│ 
+├──.github/
+│    └── worflows/
+│        └──ci.yml # New
+│ 
+├── .env.example
+│ 
 ├── src/retrieval/         # Source code
+│   ├── __init__.py
 │   ├── embeddings.py      # Document embedder
 │   ├── loader.py          # Document loader
 │   ├── store.py           # Vector store
@@ -148,22 +166,22 @@ p2/
 │   ├── test_p2_reranking.py│   ├── test_p2_hybrid.py
 │   ├── ...
 │   └── data/              # NEW: documents used in tests
-├── static/                # Web interface
+├── static/
+│   ├── index.html # ENHANCED
+│   ├── search.js  # NEW
+│   └── style.css  # ENHANCED
+│               # Web interface
 ├── documents/             # Sample documents
 └── pyproject.toml         # Project configuration
 ```
 
 ## Architecture
 
-### Core Components (from Labs 3-4)
+### Core Components (from Labs 5)
 - **Loader**: Handles .txt and .pdf files with intelligent chunking
 - **Embedder**: Bi-encoder for initial semantic search (all-MiniLM-L6-v2)
 - **Store**: ChromaDB for efficient vector search
 
-### P2 New Components
-- **Reranker**: Cross-encoder for precise relevance scoring
-- **BM25Searcher**: Keyword-based search using BM25 algorithm
-- **HybridSearcher**: Combines results using Reciprocal Rank Fusion
 
 ## Retrieval Pipeline
 
@@ -208,5 +226,5 @@ Place .txt files in the `documents/` directory and restart the server. Documents
 ## Screenshot
 The UI hasn't changed from Lab 4.
 After placing the Dracula book in the documents/ directory, the server loads it as chunks.
-![Search interface showing query results](images/search-results-lab4.png)
+![lab 5 webshot.png](images/lab%205%20webshot.png)
 
