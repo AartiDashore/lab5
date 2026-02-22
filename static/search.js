@@ -46,17 +46,7 @@
         lastResults = data.results;
 
         console.log(data.results[0]);
-        resultsDiv.innerHTML = data.results.map((result, idx) => `
-            <div class="result-card">
-                <div class="result-card-header">
-                    <span class="result-card-title">${result.id}</span>
-                    <span class="result-score">${result.rrf_score ? result.rrf_score.toFixed(3) : 'N/A'}</span>
-                </div>
-                <div class="results-source">${result.metadata?.filename ?? 'unknown'}</div>
-                <div class="result-snippet">${result.text}</div>
-                <div class="result-rank">#${idx + 1}</div>
-            </div>
-        `).join('');
+        displayResults(data.results);
 
         } catch (error) {
             resultsDiv.innerHTML = `<p class="error">Failed to connect to server</p>`;
@@ -120,4 +110,54 @@ function exportResults() {
     a.download = 'results.json';
     a.click();
     URL.revokeObjectURL(url);
+}
+
+/**
+ * Escape HTML special characters to prevent XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Display search results as enhanced cards with metadata
+ */
+function displayResults(results) {
+    const resultsDiv = document.getElementById('results');
+
+    if (results.length === 0) {
+        resultsDiv.innerHTML = '<div class="empty-state">No results found</div>';
+        return;
+    }
+
+    let html = '';
+    results.forEach((result, idx) => {
+        // Calculate similarity percentage from distance
+        // Distance 0 = 100%, Distance 2 = 0%
+        const similarity = ((1 - result.distance / 2) * 100).toFixed(1);
+
+        // Extract metadata (with fallbacks)
+        const source = result.metadata?.source || result.id;
+        const page = result.metadata?.page;
+        const chunkIndex = result.metadata?.chunk_index;
+
+        html += `
+            <div class="result-card">
+                <div class="result-header">
+                    <span class="result-rank">#${idx + 1}</span>
+                    <span class="result-score">${similarity}% match</span>
+                </div>
+                <div class="result-metadata">
+                    <span class="metadata-item">📄 ${escapeHtml(source)}</span>
+                    ${page !== undefined ? `<span class="metadata-item">Page ${page}</span>` : ''}
+                    ${chunkIndex !== undefined ? `<span class="metadata-item">Chunk ${chunkIndex}</span>` : ''}
+                </div>
+                <div class="result-text">${escapeHtml(result.text)}</div>
+            </div>
+        `;
+    });
+
+    resultsDiv.innerHTML = html;
 }
