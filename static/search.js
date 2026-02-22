@@ -2,15 +2,30 @@
 let questionHistory = [];
 let currentResults = [];  // Track current results for export
 
+    function determineMethod(useHybrid, useReranking){
+        if(useHybrid && useReranking) return 'Hybrid + Reranking';
+        if(useHybrid) return 'Hybrid';
+        if(useReranking) return 'Semantic + Reranking';
+        return 'Semantic Only';
+    }
+
+    function displayMetrics(method,count,duration) {
+        document.getElementById('methodValue').textContent = method;
+        document.getElementById('countValue').textContent = count;
+        document.getElementById('timeValue').textContent = `${duration}s`;
+    }
+
+
     async function performSearch() {
         const query = document.getElementById('queryInput').value;
         // addition from lab5_three_panel_insert
-        const hybrid = document.getElementById('useHybrid').checked;
-        const reranking = document.getElementById('useReranking').checked;
-        const nResults = parseInt(document.getElementById('nResults').value);
-        const startTime = performance.now();
+        const useHybrid = document.getElementById('useHybrid').checked;
+        const useReranking = document.getElementById('useReranking').checked;
+        const nResults = parseInt(document.getElementById('numResults').value, 10) || 5;
 
+        const startTime = performance.now();
         const resultsDiv = document.getElementById('results');
+        const searchButton = document.getElementById('searchButton');
 
         if (!query.trim()) {
             resultsDiv.innerHTML = '<p class="error">Please enter a search query</p>';
@@ -18,32 +33,38 @@ let currentResults = [];  // Track current results for export
         }
 
         resultsDiv.innerHTML = '<p class="loading">Searching...</p>';
+        searchButton.disabled = true;
 
         try {
-            const response = await fetch('http://localhost:8000/search', {
+            const response = await fetch('/search', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({query, n_results: nResults, hybrid, reranking})
+
+            body: JSON.stringify({
+                query,
+                n_results: nResults,
+                use_hybrid: useHybrid,
+                use_reranking: useReranking})
             });
 
             const data = await response.json();
 
             if (!response.ok) {
                 resultsDiv.innerHTML = `<p class="error">Error: ${data.detail}</p>`;
+                searchButton.disabled = false;
                 return;
             }
 
             if (data.results.length === 0) {
                 resultsDiv.innerHTML = '<p class="no-results">No results found</p>';
+                searchButton.disabled = false;
                 return;
             }
 
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
-        const method = hybrid ? (reranking ? 'Hybrid + Reranking' : 'Hybrid') : 'Keyword';
-        document.getElementById('metricMethod').textContent = method;
-        document.getElementById('metricCount').textContent = data.results.length;
-        document.getElementById('metricTime').textContent = elapsed + 's';
-        document.getElementById('metricsSection').style.display = 'flex';
+        const method = determineMethod(useHybrid, useReranking);
+        displayMetrics(method, data.results.length, elapsed);
+
 
         console.log(data.results[0]);
         displayResults(data.results);
@@ -52,8 +73,11 @@ let currentResults = [];  // Track current results for export
         currentResults = data.results;
         addToHistory(query, data.results);
 
+        searchButton.disabled = false;
+
         } catch (error) {
             resultsDiv.innerHTML = `<p class="error">Failed to connect to server</p>`;
+            searchButton.disabled = false;
         }
     }
 
@@ -62,7 +86,7 @@ let currentResults = [];  // Track current results for export
         try {
             const result = document.getElementById('health-status');
             result.innerHTML = `<p>Hmm...let me see</p>`;
-            const response = await fetch('http://localhost:8000/health');
+            const response = await fetch('/health');
             const data = await response.json();
             result.innerHTML = `
                 <p>${data.status} - ${data.documents_indexed} chunks indexed</p>
@@ -74,8 +98,9 @@ let currentResults = [];  // Track current results for export
     }
 
     // Allow the Enter key to trigger search
-    document.getElementById('queryInput').addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') {
+    document.getElementById('queryInput').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
             performSearch();
         }
     });

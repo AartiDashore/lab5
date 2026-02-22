@@ -40,6 +40,8 @@ class SearchRequest(BaseModel):
 
     query: str
     n_results: int = 5
+    use_hybrid: bool = True
+    use_reranking: bool = True
 
 
 class SearchResponse(BaseModel):
@@ -114,7 +116,13 @@ async def search(request: SearchRequest):
         raise HTTPException(status_code=400, detail="n_results must be between 1 and 20")
 
     try:
-        results = retriever.search(request.query, request.n_results)
+        results = retriever.search(
+            request.query,
+            request.n_results,
+            use_hybrid=request.use_hybrid,
+            use_reranking=request.use_reranking,
+        )
+
         return SearchResponse(query=request.query, results=results, count=len(results))
     except Exception as e:
         logger.error(f"Search error: {str(e)}")

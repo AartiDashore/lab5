@@ -45,7 +45,7 @@ Seattle University, ARIN 5360
         <div class="search-section">
             <textarea
                 id="queryInput"
-                placeholder="Enter your search query..."
+                placeholder="Enter your search query... (Shift+Enter for new line)"
                 rows="3"
             ></textarea>
 
@@ -56,12 +56,12 @@ Seattle University, ARIN 5360
                     Hybrid Search
                 </label>
                 <label class="checkbox-label">
-                    <input type ="checkbox" id="useReranking">
+                    <input type ="checkbox" id="useReranking" checked>
                     Reranking
                 </label>
-                <label class="n-results-label">
+                <label class="number-label">
                     Results:
-                    <input type="number" id="nResults" value="5" min="1" max="20">
+                    <input type="number" id="numResults" value="5" min="1" max="20">
                 </label>
             </div>
 
@@ -69,12 +69,22 @@ Seattle University, ARIN 5360
         </div>
 
         <!-- TODO 2.4: Add metrics display section here -->
-        <div id="metricsSection" class="metrics-section" style="display: none;">
-            <span class="metric"><span class="metric-label">Method</span><span id="metricMethod" class="metric-value">—</span></span>
-            <span class="metric"><span class="metric-label">Results</span><span id="metricCount" class="metric-value">—</span></span>
-            <span class="metric"><span class="metric-label">Time</span><span id="metricTime" class="metric-value">—</span></span>
+        <div class="metrics-section">
+            <div class="metric">
+                <span class="metric-label">Method</span>
+                <span id="methodValue" class="metric-value">—</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Results</span>
+                <span id="countValue" class="metric-value">—</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Time</span>
+                <span id="timeValue" class="metric-value">—</span>
+            </div>
         </div>
     </div>
+
 
     <!-- RIGHT PANEL: Results Display -->
     <div class="panel results-panel">
@@ -100,3 +110,6 @@ Seattle University, ARIN 5360
 </div>
 
 <script src="search.js"></script>
+
+</body>
+</html>
