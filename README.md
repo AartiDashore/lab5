@@ -165,7 +165,7 @@ To install dotenv dependency, run: `uv add python-dotenv`
 The `load_dotenv()` call reads .env and loads it into environment variables. Then `os.getenv()` retrieves each value, with a fallback default if it is not set.
 
 The `.gitignore` file makes sure that except .env file, rest other files gets pushed to Git.
-# Add to your .gitignore
+
 ```bash
 .env
 *.env
