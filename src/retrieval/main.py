@@ -88,7 +88,7 @@ async def lifespan(_app: FastAPI):
         logger.info(f"Indexed {num_docs} chunks successfully!")
 
         # Initialize RAG system with LLM client
-        llm_client = LLMClient()
+        llm_client = LLMClient(model="qwen2.5:3b", timeout=120.0)
         rag_system = RAGSystem(retriever=retriever, llm_client=llm_client)
         logger.info("RAG system initialized.")
 
