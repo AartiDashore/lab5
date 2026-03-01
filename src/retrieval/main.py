@@ -17,14 +17,17 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 
+from retrieval.llm import LLMClient
+from retrieval.rag import RAGSystem
 from retrieval.retriever import DocumentRetriever
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global retriever instance
+# Global instances
 retriever = None
+rag_system = None
 
 
 class HealthResponse(BaseModel):
@@ -52,6 +55,23 @@ class SearchResponse(BaseModel):
     count: int
 
 
+class RAGRequest(BaseModel):
+    """Request model for RAG query."""
+
+    question: str
+    n_context_docs: int = 3
+    temperature: float = 0.7
+
+
+class RAGResponse(BaseModel):
+    """Response model for RAG query."""
+
+    question: str
+    answer: str
+    context: list[dict]
+    context_count: int
+
+
 # Define lifespan function to load models on startup
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -60,11 +80,17 @@ async def lifespan(_app: FastAPI):
         logger.info("Loading models...")
 
         # Index documents from the documents/ directory
-        global retriever
+        global retriever, rag_system
         retriever = DocumentRetriever()
         docs_dir = "tests/data" if "PYTEST_CURRENT_TEST" in os.environ else "documents"
         num_docs = retriever.index_documents(docs_dir)
         logger.info(f"Indexed {num_docs} chunks successfully!")
+
+        # Initialize RAG system with LLM client
+        llm_client = LLMClient()
+        rag_system = RAGSystem(retriever=retriever, llm_client=llm_client)
+        logger.info("RAG system initialized.")
+
     except Exception as e:
         # Don't crash the server, but log the error
         logger.error(f"Failed to load model: {str(e)}")
@@ -127,6 +153,54 @@ async def search(request: SearchRequest):
     except Exception as e:
         logger.error(f"Search error: {str(e)}")
         raise HTTPException(status_code=500, detail="Search failed")
+
+
+@app.post("/rag", response_model=RAGResponse)
+async def rag_query(request: RAGRequest):
+    """
+    Answer a question using Retrieval-Augmented Generation.
+
+    Retrieves relevant documents, builds context, and generates
+    an answer using the local LLM.
+
+    Args:
+        request: RAGRequest with question and optional parameters
+
+    Returns:
+        RAGResponse with answer and source documents
+    """
+    if rag_system is None:
+        raise HTTPException(status_code=503, detail="RAG system not initialized")
+
+    if not request.question.strip():
+        raise HTTPException(status_code=400, detail="Question cannot be empty")
+
+    if request.n_context_docs < 1 or request.n_context_docs > 10:
+        raise HTTPException(status_code=400, detail="n_context_docs must be between 1 and 10")
+
+    if not (0.0 <= request.temperature <= 1.0):
+        raise HTTPException(status_code=400, detail="temperature must be between 0.0 and 1.0")
+
+    try:
+        result = rag_system.query(
+            question=request.question,
+            n_results=request.n_context_docs,
+            temperature=request.temperature,
+        )
+
+        return RAGResponse(
+            question=result["question"],
+            answer=result["answer"],
+            context=result["sources"],
+            context_count=result["n_docs_retrieved"],
+        )
+
+    except RuntimeError as e:
+        logger.error(f"LLM error during RAG query: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"LLM error: {str(e)}")
+    except Exception as e:
+        logger.error(f"RAG query error: {str(e)}")
+        raise HTTPException(status_code=500, detail="RAG query failed")
 
 
 # Implement health check endpoint
