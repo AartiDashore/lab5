@@ -2,71 +2,112 @@
 let questionHistory = [];
 let currentResults = [];  // Track current results for export
 
-    function determineMethod(useHybrid, useReranking){
-        if(useHybrid && useReranking) return 'Hybrid + Reranking';
-        if(useHybrid) return 'Hybrid';
-        if(useReranking) return 'Semantic + Reranking';
-        return 'Semantic Only';
+// Q11: Default system prompt (matches rag.py DEFAULT_SYSTEM_PROMPT)
+const DEFAULT_SYSTEM_PROMPT = `You are a knowledgeable and helpful assistant that answers questions using only the context documents provided to you.
+
+Guidelines:
+1. Base your answer strictly on the provided context. Do not use outside knowledge.
+2. When referencing information, cite the source document by name (e.g., 'According to [source]...' or 'As stated in [source]...').
+3. If the context contains partial information, share what is available and clearly note what is missing or unclear.
+4. If the context does not contain enough information to answer the question, say so honestly and directly — do not guess or fabricate an answer.
+5. Keep your tone professional, clear, and concise.
+6. If multiple sources agree or disagree, note that in your response.`;
+
+// Q11: Load system prompt from localStorage on page load
+function loadSystemPrompt() {
+    const saved = localStorage.getItem('systemPrompt');
+    const textarea = document.getElementById('systemPrompt');
+    if (saved !== null) {
+        textarea.value = saved;
+    } else {
+        textarea.value = DEFAULT_SYSTEM_PROMPT;
+    }
+}
+
+// Q11: Save system prompt to localStorage
+function saveSystemPrompt() {
+    const prompt = document.getElementById('systemPrompt').value;
+    localStorage.setItem('systemPrompt', prompt);
+    alert('System prompt saved!');
+}
+
+// Q11: Reset system prompt to default
+function resetSystemPrompt() {
+    document.getElementById('systemPrompt').value = DEFAULT_SYSTEM_PROMPT;
+    localStorage.setItem('systemPrompt', DEFAULT_SYSTEM_PROMPT);
+}
+
+// Q11: Get the current system prompt value
+function getSystemPrompt() {
+    return document.getElementById('systemPrompt').value.trim() || DEFAULT_SYSTEM_PROMPT;
+}
+
+// Initialize system prompt on page load
+document.addEventListener('DOMContentLoaded', loadSystemPrompt);
+
+
+function determineMethod(useHybrid, useReranking) {
+    if (useHybrid && useReranking) return 'Hybrid + Reranking';
+    if (useHybrid) return 'Hybrid';
+    if (useReranking) return 'Semantic + Reranking';
+    return 'Semantic Only';
+}
+
+function displayMetrics(method, count, duration) {
+    document.getElementById('methodValue').textContent = method;
+    document.getElementById('countValue').textContent = count;
+    document.getElementById('timeValue').textContent = `${duration}s`;
+}
+
+
+async function performSearch() {
+    const query = document.getElementById('queryInput').value;
+    const useHybrid = document.getElementById('useHybrid').checked;
+    const useReranking = document.getElementById('useReranking').checked;
+    const nResults = parseInt(document.getElementById('numResults').value, 10) || 5;
+
+    const startTime = performance.now();
+    const resultsDiv = document.getElementById('results');
+    const searchButton = document.getElementById('searchButton');
+
+    if (!query.trim()) {
+        resultsDiv.innerHTML = '<p class="error">Please enter a search query</p>';
+        return;
     }
 
-    function displayMetrics(method,count,duration) {
-        document.getElementById('methodValue').textContent = method;
-        document.getElementById('countValue').textContent = count;
-        document.getElementById('timeValue').textContent = `${duration}s`;
-    }
+    resultsDiv.innerHTML = '<p class="loading">Searching...</p>';
+    searchButton.disabled = true;
 
-
-    async function performSearch() {
-        const query = document.getElementById('queryInput').value;
-        // addition from lab5_three_panel_insert
-        const useHybrid = document.getElementById('useHybrid').checked;
-        const useReranking = document.getElementById('useReranking').checked;
-        const nResults = parseInt(document.getElementById('numResults').value, 10) || 5;
-
-        const startTime = performance.now();
-        const resultsDiv = document.getElementById('results');
-        const searchButton = document.getElementById('searchButton');
-
-        if (!query.trim()) {
-            resultsDiv.innerHTML = '<p class="error">Please enter a search query</p>';
-            return;
-        }
-
-        resultsDiv.innerHTML = '<p class="loading">Searching...</p>';
-        searchButton.disabled = true;
-
-        try {
-            const response = await fetch('/search', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-
+    try {
+        const response = await fetch('/search', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 query,
                 n_results: nResults,
                 use_hybrid: useHybrid,
-                use_reranking: useReranking})
-            });
+                use_reranking: useReranking
+            })
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (!response.ok) {
-                resultsDiv.innerHTML = `<p class="error">Error: ${data.detail}</p>`;
-                searchButton.disabled = false;
-                return;
-            }
+        if (!response.ok) {
+            resultsDiv.innerHTML = `<p class="error">Error: ${data.detail}</p>`;
+            searchButton.disabled = false;
+            return;
+        }
 
-            if (data.results.length === 0) {
-                resultsDiv.innerHTML = '<p class="no-results">No results found</p>';
-                searchButton.disabled = false;
-                return;
-            }
+        if (data.results.length === 0) {
+            resultsDiv.innerHTML = '<p class="no-results">No results found</p>';
+            searchButton.disabled = false;
+            return;
+        }
 
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
         const method = determineMethod(useHybrid, useReranking);
         displayMetrics(method, data.results.length, elapsed);
 
-
-        console.log(data.results[0]);
         displayResults(data.results);
 
         // Store results and add to history
@@ -75,47 +116,55 @@ let currentResults = [];  // Track current results for export
 
         searchButton.disabled = false;
 
-        } catch (error) {
-            resultsDiv.innerHTML = `<p class="error">Failed to connect to server</p>`;
-            searchButton.disabled = false;
-        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<p class="error">Failed to connect to server</p>`;
+        searchButton.disabled = false;
     }
-
-    // Get health status from the server and show it in the health-status div
-    async function displayHealth() {
-        try {
-            const result = document.getElementById('health-status');
-            result.innerHTML = `<p>Hmm...let me see</p>`;
-            const response = await fetch('/health');
-            const data = await response.json();
-            result.innerHTML = `
-                <p>${data.status} - ${data.documents_indexed} chunks indexed</p>
-                <p>${data.message}</p>
-            `;
-        } catch (error) {
-            document.getElementById('health-status').textContent = 'Error fetching health status';
-        }
-    }
-
-    // Allow the Enter key to trigger search
-    document.getElementById('queryInput').addEventListener('keydown', function (event) {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            performSearch();
-        }
-    });
-let searchHistory = [];
-let lastResults = [];
-
-function addToHistory(query, count, time) {
-    searchHistory.unshift({query, count, time});
-    document.getElementById('historyList').innerHTML = searchHistory.map(item => `
-        <div class="history-item" onclick="reloadSearch('${item.query.replace(/'/g, "\\'")}')">
-            <div class="history-query">${item.query}</div>
-            <div class="history-meta">${item.count} results · ${item.time}s</div>
-        </div>
-    `).join('');
 }
+
+// Q11: RAG query function that passes the custom system prompt
+async function performRAGQuery(question) {
+    const systemPrompt = getSystemPrompt();
+    const nResults = parseInt(document.getElementById('numResults').value, 10) || 3;
+
+    const response = await fetch('/rag', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            question: question,
+            n_context_docs: Math.min(nResults, 10),
+            temperature: 0.7,
+            system_prompt: systemPrompt  // Q11: send custom system prompt
+        })
+    });
+
+    return await response.json();
+}
+
+
+// Get health status from the server and show it in the health-status div
+async function displayHealth() {
+    try {
+        const result = document.getElementById('health-status');
+        result.innerHTML = `<p>Hmm...let me see</p>`;
+        const response = await fetch('/health');
+        const data = await response.json();
+        result.innerHTML = `
+            <p>${data.status} - ${data.documents_indexed} chunks indexed</p>
+            <p>${data.message}</p>
+        `;
+    } catch (error) {
+        document.getElementById('health-status').textContent = 'Error fetching health status';
+    }
+}
+
+// Allow the Enter key to trigger search
+document.getElementById('queryInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        performSearch();
+    }
+});
 
 
 function reloadSearch(query) {
@@ -145,11 +194,7 @@ function displayResults(results) {
 
     let html = '';
     results.forEach((result, idx) => {
-        // Calculate similarity percentage from distance
-        // Distance 0 = 100%, Distance 2 = 0%
         const similarity = ((1 - result.distance / 2) * 100).toFixed(1);
-
-        // Extract metadata (with fallbacks)
         const source = result.metadata?.source || result.id;
         const page = result.metadata?.page;
         const chunkIndex = result.metadata?.chunk_index;
@@ -197,9 +242,7 @@ function renderHistory() {
         return;
     }
 
-    // Display newest first (reverse order)
     const html = questionHistory.map((entry, index) => {
-        // Truncate long questions
         const displayQuestion = entry.question.length > 100
             ? entry.question.substring(0, 100) + '...'
             : entry.question;
@@ -223,14 +266,8 @@ function renderHistory() {
  */
 function loadHistoryItem(index) {
     const entry = questionHistory[index];
-
-    // Restore the query to the input
     document.getElementById('queryInput').value = entry.question;
-
-    // Update current results for export
     currentResults = entry.results;
-
-    // Display the results
     displayResults(entry.results);
 }
 
@@ -242,13 +279,10 @@ function clearHistory() {
         questionHistory = [];
         currentResults = [];
         renderHistory();
-
-        // Reset results display
         document.getElementById('results').innerHTML =
             '<div class="empty-state">Enter a query to search</div>';
     }
 }
-
 
 /**
  * Export current results as JSON file
@@ -259,14 +293,10 @@ function exportResults() {
         return;
     }
 
-    // Create JSON string with nice formatting
     const dataStr = JSON.stringify(currentResults, null, 2);
-
-    // Create blob and download link
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
-    // Create temporary link and trigger download
     const a = document.createElement('a');
     a.href = url;
     a.download = `search-results-${new Date().toISOString().slice(0, 10)}.json`;
@@ -274,6 +304,5 @@ function exportResults() {
     a.click();
     document.body.removeChild(a);
 
-    // Clean up
     URL.revokeObjectURL(url);
 }

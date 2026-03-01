@@ -1,7 +1,7 @@
 """
 Lab 4 FastAPI API.
 
-@author: Kevin Lundeen
+@author: Sebastian Silva & Aarti Dashore
 Seattle University, ARIN 5360
 @see: https://catalog.seattleu.edu/preview_course_nopop.php?catoid=55&coid=190380
 @version: 2.0.0+w26
@@ -10,6 +10,7 @@ Seattle University, ARIN 5360
 import logging
 import os
 from contextlib import asynccontextmanager
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -62,6 +63,7 @@ class RAGRequest(BaseModel):
     question: str
     n_context_docs: int = 3
     temperature: float = 0.7
+    system_prompt: Optional[str] = None  # Q11: custom system prompt
 
 
 class RAGResponse(BaseModel):
@@ -111,11 +113,9 @@ app = FastAPI(
 )
 
 # Add cross-origin resource sharing (CORS) middleware
-# (gives browser permission to call our API)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    # In production, specify actual origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -124,15 +124,7 @@ app.add_middleware(
 
 @app.post("/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
-    """
-    Search for documents relevant to the query.
-
-    Args:
-        request: SearchRequest with query and optional n_results
-
-    Returns:
-        SearchResponse with results
-    """
+    """Search for documents relevant to the query."""
     if retriever is None:
         raise HTTPException(status_code=503, detail="Retriever not initialized")
 
@@ -158,18 +150,7 @@ async def search(request: SearchRequest):
 
 @app.post("/rag", response_model=RAGResponse)
 async def rag_query(request: RAGRequest):
-    """
-    Answer a question using Retrieval-Augmented Generation.
-
-    Retrieves relevant documents, builds context, and generates
-    an answer using the local LLM.
-
-    Args:
-        request: RAGRequest with question and optional parameters
-
-    Returns:
-        RAGResponse with answer and source documents
-    """
+    """Answer a question using Retrieval-Augmented Generation."""
     if rag_system is None:
         raise HTTPException(status_code=503, detail="RAG system not initialized")
 
@@ -187,6 +168,7 @@ async def rag_query(request: RAGRequest):
             question=request.question,
             n_results=request.n_context_docs,
             temperature=request.temperature,
+            system_prompt=request.system_prompt,  # Q11: pass custom system prompt
         )
 
         return RAGResponse(
@@ -204,15 +186,9 @@ async def rag_query(request: RAGRequest):
         raise HTTPException(status_code=500, detail="RAG query failed")
 
 
-# Implement health check endpoint
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """
-    Check if the API is running.
-
-    Returns:
-        Health status
-    """
+    """Check if the API is running."""
     if retriever is None:
         return HealthResponse(
             status="unhealthy",
@@ -228,7 +204,6 @@ async def health_check():
     )
 
 
-# Add error handler for general exceptions
 @app.exception_handler(Exception)
 async def general_exception_handler(_request, exc):
     """Handle unexpected exceptions."""
@@ -236,15 +211,12 @@ async def general_exception_handler(_request, exc):
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
-# Create a test endpoint that raises exceptions (only for testing!)
 @app.get("/test/error")
 async def test_error():
     raise RuntimeError("Something went wrong")
 
 
-# Mount static files LAST - catches all remaining routes
-# including / --> /static/index.html, and
-#           /stlye.css --> /static/style.css
+# Mount static files LAST
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":

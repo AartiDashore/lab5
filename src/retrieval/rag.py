@@ -11,6 +11,21 @@ from typing import Optional
 from retrieval.llm import LLMClient
 from retrieval.retriever import DocumentRetriever
 
+DEFAULT_SYSTEM_PROMPT = (
+    "You are a knowledgeable and helpful assistant that answers questions "
+    "using only the context documents provided to you.\n\n"
+    "Guidelines:\n"
+    "1. Base your answer strictly on the provided context. Do not use outside knowledge.\n"
+    "2. When referencing information, cite the source document by name "
+    "(e.g., 'According to [source]...' or 'As stated in [source]...').\n"
+    "3. If the context contains partial information, share what is available "
+    "and clearly note what is missing or unclear.\n"
+    "4. If the context does not contain enough information to answer the question, "
+    "say so honestly and directly — do not guess or fabricate an answer.\n"
+    "5. Keep your tone professional, clear, and concise.\n"
+    "6. If multiple sources agree or disagree, note that in your response."
+)
+
 
 class RAGSystem:
     def __init__(
@@ -28,6 +43,7 @@ class RAGSystem:
         question: str,
         n_results: Optional[int] = None,
         temperature: float = 0.7,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         """
         RAG Pipeline:
@@ -49,10 +65,10 @@ class RAGSystem:
         prompt = self._create_prompt(question, context)
 
         # Step 4: Generate answer using LLM
-        system_prompt = self._get_system_prompt()
+        active_system_prompt = self._get_system_prompt(system_prompt)
         answer = self.llm_client.generate(
             prompt=prompt,
-            system_prompt=system_prompt,
+            system_prompt=active_system_prompt,
             temperature=temperature,
         )
 
@@ -75,14 +91,7 @@ class RAGSystem:
         }
 
     def _build_context(self, documents: list) -> str:
-        """Format retrieved documents into a single context string.
-
-        Args:
-            documents: List of retrieved document dicts.
-
-        Returns:
-            A formatted context string.
-        """
+        """Format retrieved documents into a single context string."""
         if not documents:
             return "No relevant documents found."
 
@@ -96,15 +105,7 @@ class RAGSystem:
         return "\n\n".join(parts)
 
     def _create_prompt(self, question: str, context: str) -> str:
-        """Build the final prompt combining context and question.
-
-        Args:
-            question: The user's question.
-            context: The formatted context string from retrieved docs.
-
-        Returns:
-            A complete prompt string ready to send to the LLM.
-        """
+        """Build the final prompt combining context and question."""
         return f"""Context information from relevant documents:
 
 {context}
@@ -116,23 +117,8 @@ Question: {question}
 
 Answer:"""
 
-    def _get_system_prompt(self) -> str:
-        """Define the LLM's behavior guidelines.
-
-        Returns:
-            A system prompt string.
-        """
-        return (
-            "You are a knowledgeable and helpful assistant that answers questions "
-            "using only the context documents provided to you.\n\n"
-            "Guidelines:\n"
-            "1. Base your answer strictly on the provided context. Do not use outside knowledge.\n"
-            "2. When referencing information, cite the source document by name "
-            "(e.g., 'According to [source]...' or 'As stated in [source]...').\n"
-            "3. If the context contains partial information, share what is available "
-            "and clearly note what is missing or unclear.\n"
-            "4. If the context does not contain enough information to answer the question, "
-            "say so honestly and directly — do not guess or fabricate an answer.\n"
-            "5. Keep your tone professional, clear, and concise.\n"
-            "6. If multiple sources agree or disagree, note that in your response."
-        )
+    def _get_system_prompt(self, custom_prompt: Optional[str] = None) -> str:
+        """Return custom system prompt if provided, otherwise return the default."""
+        if custom_prompt and custom_prompt.strip():
+            return custom_prompt.strip()
+        return DEFAULT_SYSTEM_PROMPT

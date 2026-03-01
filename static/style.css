@@ -1,4 +1,3 @@
-/* Default Styles for Student Projects, v3 */
 
 /* Box sizing reset for easier sizing calculations */
 * {
@@ -438,4 +437,56 @@ a:hover {
     color: #6b7280;
     display: flex;
     justify-content: space-between;
+}
+
+/* ===== Q11: SYSTEM PROMPT SECTION ===== */
+.system-prompt-section {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e0e4ff;
+    border-radius: 6px;
+    padding: 0.75rem;
+    background: #f8f9ff;
+}
+
+.system-prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.system-prompt-header label {
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.system-prompt-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Override global button margin-top for these inline buttons */
+.system-prompt-buttons button {
+    margin-top: 0;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+}
+
+#systemPrompt {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+    background: white;
+}
+
+#systemPrompt:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
