@@ -40,7 +40,7 @@ class RAGSystem:
         n_docs = n_results if n_results is not None else self.n_context_docs
 
         # Step 1: Retrieve relevant documents
-        retrieved = self.retriever.retrieve(question, n_results=n_docs)
+        retrieved = self.retriever.search(question, n_results=n_docs)
 
         # Step 2: Build context string from retrieved docs
         context = self._build_context(retrieved)
