@@ -36,6 +36,7 @@ class HealthResponse(BaseModel):
     status: str
     documents_indexed: int
     message: str
+    rag_available: bool
 
 
 class SearchRequest(BaseModel):
@@ -214,12 +215,13 @@ async def health_check():
     """
     if retriever is None:
         return HealthResponse(
-            status="unhealthy", message="Retriever not initialized", documents_indexed=0
+            status="unhealthy", message="Retriever not initialized", documents_indexed=0, rag_available=False
         )
     return HealthResponse(
         status="healthy",
         message="API is running and ready",
         documents_indexed=retriever.document_count,
+        rag_available=retriever.document_count > 0
     )
 
 
