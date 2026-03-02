@@ -21,6 +21,11 @@
 
     <!-- CENTER PANEL -->
     <div class="panel search-panel">
+        <nav class="top-nav">
+            <a href="/" class="active">Search Interface</a>
+            <a href="/playground.html">LLM Playground</a>
+        </nav>
+
         <h1>Lab 5: Document Retrieval</h1>
 
         <div class="health-section">
@@ -95,7 +100,7 @@
 <dialog id="promptPreviewModal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3 style="margin:0;">Full Prompt Preview</h3>
-        <button onclick="closePromptPreview()">✕</button>
+        <button onclick="closePromptPreview()">X</button>
     </div>
 
     <div id="promptPreviewBody" style="margin-top:12px;"></div>

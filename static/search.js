@@ -45,7 +45,6 @@ function getSystemPrompt() {
 // Initialize system prompt on page load
 document.addEventListener('DOMContentLoaded', loadSystemPrompt);
 
-
 function determineMethod(useHybrid, useReranking) {
     if (useHybrid && useReranking) return 'Hybrid + Reranking';
     if (useHybrid) return 'Hybrid';
@@ -59,6 +58,22 @@ function displayMetrics(method, count, duration) {
     document.getElementById('timeValue').textContent = `${duration}s`;
 }
 
+/**
+ * Escape HTML special characters to prevent XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text ?? '';
+    return div.innerHTML;
+}
+
+/**
+ * Highlight citations like [Document X] or [source]
+ * Safe because we run it after escapeHtml.
+ */
+function highlightCitations(escapedText) {
+    return escapedText.replace(/\[(.*?)\]/g, '<span class="citation">[$1]</span>');
+}
 
 async function performSearch() {
     const query = document.getElementById('queryInput').value;
@@ -93,12 +108,12 @@ async function performSearch() {
         const data = await response.json();
 
         if (!response.ok) {
-            resultsDiv.innerHTML = `<p class="error">Error: ${data.detail}</p>`;
+            resultsDiv.innerHTML = `<p class="error">Error: ${escapeHtml(data.detail || 'Request failed')}</p>`;
             searchButton.disabled = false;
             return;
         }
 
-        if (data.results.length === 0) {
+        if (!data.results || data.results.length === 0) {
             resultsDiv.innerHTML = '<p class="no-results">No results found</p>';
             searchButton.disabled = false;
             return;
@@ -141,17 +156,16 @@ async function performRAGQuery(question) {
     return await response.json();
 }
 
-
 // Get health status from the server and show it in the health-status div
 async function displayHealth() {
     try {
         const result = document.getElementById('health-status');
-        result.innerHTML = `<p>Hmm...let me see</p>`;
+        result.innerHTML = `<p>Checking...</p>`;
         const response = await fetch('/health');
         const data = await response.json();
         result.innerHTML = `
-            <p>${data.status} - ${data.documents_indexed} chunks indexed</p>
-            <p>${data.message}</p>
+            <p>${escapeHtml(data.status)} - ${escapeHtml(String(data.documents_indexed))} chunks indexed</p>
+            <p>${escapeHtml(data.message)}</p>
         `;
     } catch (error) {
         document.getElementById('health-status').textContent = 'Error fetching health status';
@@ -166,28 +180,18 @@ document.getElementById('queryInput').addEventListener('keydown', function (even
     }
 });
 
-
 function reloadSearch(query) {
     document.getElementById('queryInput').value = query;
     performSearch();
 }
 
 /**
- * Escape HTML special characters to prevent XSS
- */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-/**
- * Display search results as enhanced cards with metadata
+ * Display search results as expandable cards with metadata (Q13)
  */
 function displayResults(results) {
     const resultsDiv = document.getElementById('results');
 
-    if (results.length === 0) {
+    if (!results || results.length === 0) {
         resultsDiv.innerHTML = '<div class="empty-state">No results found</div>';
         return;
     }
@@ -199,19 +203,20 @@ function displayResults(results) {
         const page = result.metadata?.page;
         const chunkIndex = result.metadata?.chunk_index;
 
+        const textEscaped = escapeHtml(result.text || '');
+        const textWithCites = highlightCitations(textEscaped);
+
         html += `
-            <div class="result-card">
-                <div class="result-header">
+            <details class="result-card">
+                <summary class="result-header">
                     <span class="result-rank">#${idx + 1}</span>
                     <span class="result-score">${similarity}% match</span>
-                </div>
-                <div class="result-metadata">
-                    <span class="metadata-item">📄 ${escapeHtml(source)}</span>
-                    ${page !== undefined ? `<span class="metadata-item">Page ${page}</span>` : ''}
-                    ${chunkIndex !== undefined ? `<span class="metadata-item">Chunk ${chunkIndex}</span>` : ''}
-                </div>
-                <div class="result-text">${escapeHtml(result.text)}</div>
-            </div>
+                    <span class="metadata-item">Source: ${escapeHtml(source)}</span>
+                    ${page !== undefined ? `<span class="metadata-item">Page ${escapeHtml(String(page))}</span>` : ''}
+                    ${chunkIndex !== undefined ? `<span class="metadata-item">Chunk ${escapeHtml(String(chunkIndex))}</span>` : ''}
+                </summary>
+                <div class="result-text">${textWithCites}</div>
+            </details>
         `;
     });
 

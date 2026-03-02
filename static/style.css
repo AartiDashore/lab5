@@ -490,3 +490,68 @@ a:hover {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+
+/* ===== NAVIGATION ===== */
+.top-nav {
+    width: 100%;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.top-nav a {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+}
+
+.top-nav a.active {
+    border-color: var(--primary-color);
+    background: #eff6ff;
+}
+
+/* ===== EXPANDABLE RESULT CARDS (Q13) ===== */
+.result-card {
+    cursor: pointer;
+}
+
+.result-card summary {
+    list-style: none;
+}
+
+.result-card summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Your JS uses .result-header; add styling so it matches your card header layout */
+.result-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+/* ===== RESULT TEXT (Q13) ===== */
+.result-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-color);
+    white-space: pre-wrap; /* preserves \n line breaks */
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+/* ===== CITATION HIGHLIGHT (Q13) ===== */
+.citation {
+    background: #eef2ff;
+    color: #4f46e5;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.95em;
+}

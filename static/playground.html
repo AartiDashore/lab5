@@ -61,6 +61,17 @@
     .logo { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
     .logo span { color: var(--accent); }
 
+    .top-nav a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 11px;
+      margin-right: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .top-nav a.active { color: var(--accent); }
+    .top-nav a:hover { color: var(--text); }
+
     .badge {
       font-size: 10px;
       font-weight: 600;
@@ -260,6 +271,14 @@
       line-height: 1.7; white-space: pre-wrap; word-break: break-word; font-size: 13px;
     }
 
+    .citation {
+      background: rgba(79,159,255,0.12);
+      color: var(--accent2);
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+
     .context-header { font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
     .context-header::before { content: ''; width: 3px; height: 12px; background: var(--accent3); border-radius: 2px; }
 
@@ -267,9 +286,13 @@
 
     .context-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; transition: border-color 0.2s, transform 0.2s; }
     .context-card:hover { border-color: rgba(255,79,159,0.4); transform: translateY(-2px); }
-    .card-num { font-size: 10px; font-weight: 700; color: var(--accent3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-    .card-source { font-size: 11px; color: var(--accent2); margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .card-text { font-size: 11px; color: var(--text-dim); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .context-card summary { cursor: pointer; list-style: none; }
+    .context-card summary::-webkit-details-marker { display: none; }
+
+    .card-num { font-size: 10px; font-weight: 700; color: var(--accent3); letter-spacing: 1px; text-transform: uppercase; margin-right: 8px; }
+    .card-source { font-size: 11px; color: var(--accent2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-text { font-size: 11px; color: var(--text-dim); line-height: 1.5; margin-top: 8px; white-space: pre-wrap; }
     .card-score { margin-top: 8px; font-size: 10px; color: var(--text-muted); }
     .card-score span { color: var(--accent); font-weight: 600; }
 
@@ -289,9 +312,15 @@
 <body>
 
   <header>
-    <div class="logo">RAG <span>Playground</span></div>
+    <div style="display:flex;align-items:center;gap:24px;">
+      <div class="logo">RAG <span>Playground</span></div>
+      <nav class="top-nav">
+        <a href="/">Search Interface</a>
+        <a href="/playground.html" class="active">LLM Playground</a>
+      </nav>
+    </div>
     <div style="display:flex;gap:10px;align-items:center;">
-      <span id="llm-status" class="badge">● CHECKING</span>
+      <span id="llm-status" class="badge">CHECKING</span>
       <span class="badge">ARIN 5360</span>
     </div>
   </header>
@@ -321,8 +350,8 @@
         <div class="section-title">System Prompt</div>
         <textarea id="system-prompt" rows="12" placeholder="Enter system prompt..."></textarea>
         <div class="prompt-actions">
-          <button class="btn btn-ghost" id="reset-prompt">↺ Reset</button>
-          <button class="btn btn-outline" id="preview-prompt">⊞ Preview Full Prompt</button>
+          <button class="btn btn-ghost" id="reset-prompt">Reset</button>
+          <button class="btn btn-outline" id="preview-prompt">Preview Full Prompt</button>
         </div>
       </div>
     </div>
@@ -333,7 +362,7 @@
         <textarea id="question" placeholder="Ask a question about your documents..."></textarea>
         <div class="question-footer">
           <span class="char-count" id="char-count">0 chars</span>
-          <button class="btn btn-primary" id="generate-btn">Generate →</button>
+          <button class="btn btn-primary" id="generate-btn">Generate</button>
         </div>
       </div>
 
@@ -362,7 +391,7 @@
     <div class="modal">
       <div class="modal-header">
         <div class="modal-title">Full Prompt Preview</div>
-        <button class="modal-close" id="modal-close">✕</button>
+        <button class="modal-close" id="modal-close">X</button>
       </div>
       <div class="modal-body"><pre id="modal-content"></pre></div>
     </div>
@@ -399,19 +428,23 @@ Guidelines:
     questionEl.addEventListener('input', () => document.getElementById('char-count').textContent = questionEl.value.length + ' chars');
     questionEl.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) generate(); });
 
+    function highlightCitations(text) {
+      return String(text || '').replace(/\[(.*?)\]/g, '<span class="citation">[$1]</span>');
+    }
+
     async function checkHealth() {
       const badge = document.getElementById('llm-status');
       try {
         const d = await (await fetch('/health')).json();
         if (d.rag_available) {
-          badge.textContent = '● LLM READY';
+          badge.textContent = 'LLM READY';
           badge.style.cssText = 'background:rgba(79,255,176,0.1);color:var(--accent);border-color:rgba(79,255,176,0.2);';
         } else {
-          badge.textContent = '● LLM OFFLINE';
+          badge.textContent = 'LLM OFFLINE';
           badge.style.cssText = 'background:rgba(255,79,79,0.1);color:#ff9f9f;border-color:rgba(255,79,79,0.2);';
         }
       } catch {
-        badge.textContent = '● API DOWN';
+        badge.textContent = 'API DOWN';
         badge.style.cssText = 'background:rgba(255,79,79,0.1);color:#ff9f9f;border-color:rgba(255,79,79,0.2);';
       }
     }
@@ -438,6 +471,7 @@ Guidelines:
             question,
             n_context_docs: parseInt(nDocsSlider.value),
             temperature: parseFloat(tempSlider.value),
+            system_prompt: systemPromptEl.value
           }),
         });
 
@@ -455,36 +489,41 @@ Guidelines:
         showError('Network error: Could not reach the API. Is the server running?');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Generate →';
+        btn.textContent = 'Generate';
       }
     }
 
     function renderResult(data, elapsed) {
-      const words = data.answer.trim().split(/\s+/).length;
+      const words = String(data.answer || '').trim().split(/\s+/).filter(Boolean).length;
 
       document.getElementById('meta-bar').innerHTML =
-        '<div class="meta-item">⏱ <strong>' + elapsed + 's</strong></div>' +
+        '<div class="meta-item">Time: <strong>' + elapsed + 's</strong></div>' +
         '<div class="meta-dot"></div>' +
-        '<div class="meta-item">◈ <strong>' + data.context_count + '</strong> docs used</div>' +
+        '<div class="meta-item">Docs used: <strong>' + (data.context_count ?? 0) + '</strong></div>' +
         '<div class="meta-dot"></div>' +
-        '<div class="meta-item">≈ <strong>' + words + '</strong> words</div>' +
+        '<div class="meta-item">Words: <strong>' + words + '</strong></div>' +
         '<div class="meta-dot"></div>' +
-        '<div class="meta-item">🌡 temp <strong>' + parseFloat(tempSlider.value).toFixed(1) + '</strong></div>';
+        '<div class="meta-item">Temp: <strong>' + parseFloat(tempSlider.value).toFixed(1) + '</strong></div>';
 
-      document.getElementById('answer-block').textContent = data.answer;
+      document.getElementById('answer-block').innerHTML = highlightCitations(data.answer);
 
       const grid = document.getElementById('context-grid');
       grid.innerHTML = '';
       (data.context || []).forEach((doc, i) => {
         const source = (doc.metadata && (doc.metadata.source || doc.metadata.filename)) || ('Document ' + (i + 1));
         const score  = doc.score != null ? parseFloat(doc.score).toFixed(3) : null;
-        const card   = document.createElement('div');
+
+        const card = document.createElement('details');
         card.className = 'context-card';
+
         card.innerHTML =
-          '<div class="card-num">Source ' + (i + 1) + '</div>' +
-          '<div class="card-source" title="' + source + '">📄 ' + source + '</div>' +
+          '<summary>' +
+            '<span class="card-num">Source ' + (i + 1) + '</span>' +
+            '<span class="card-source" title="' + source + '">' + source + '</span>' +
+          '</summary>' +
           '<div class="card-text">' + (doc.text || '') + '</div>' +
           (score !== null ? '<div class="card-score">Relevance: <span>' + score + '</span></div>' : '');
+
         grid.appendChild(card);
       });
 
@@ -493,7 +532,7 @@ Guidelines:
 
     function showError(msg) {
       const el = document.getElementById('error-block');
-      el.textContent = '⚠ ' + msg;
+      el.textContent = msg;
       el.style.display = 'block';
       setView('error');
     }
