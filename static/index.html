@@ -1,11 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--
-@author: FIXME: Sebastian Silva & Aarti Dashore
-Seattle University, ARIN 5360
-@see: https://catalog.seattleu.edu/preview_course_nopop.php?catoid=55&coid=190380
-@version: 2.0.0+w26
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +8,7 @@ Seattle University, ARIN 5360
 </head>
 <body>
 <div class="main-container">
-    <!-- LEFT PANEL: Question History -->
+    <!-- LEFT PANEL -->
     <div class="panel history-panel">
         <div class="panel-header">
             <h2>History</h2>
@@ -25,59 +19,50 @@ Seattle University, ARIN 5360
         </div>
     </div>
 
-    <!-- CENTER PANEL: Question Input -->
+    <!-- CENTER PANEL -->
     <div class="panel search-panel">
         <h1>Lab 5: Document Retrieval</h1>
 
-        <!-- Health Section -->
         <div class="health-section">
             <button id="healthButton" onclick="displayHealth()">Check Health</button>
             <div id="health-status">Click to check server status</div>
         </div>
 
-        <!-- Q11: System Prompt Section -->
+        <!-- System Prompt -->
         <div class="system-prompt-section">
             <div class="system-prompt-header">
                 <label for="systemPrompt"><strong>System Prompt</strong></label>
                 <div class="system-prompt-buttons">
-                    <button id="savePromptButton" onclick="saveSystemPrompt()">Save</button>
-                    <button id="resetPromptButton" onclick="resetSystemPrompt()">Reset</button>
+                    <button onclick="saveSystemPrompt()">Save</button>
+                    <button onclick="resetSystemPrompt()">Reset</button>
                 </div>
             </div>
-            <textarea
-                id="systemPrompt"
-                rows="5"
-                placeholder="Customize how the AI assistant behaves..."
-            ></textarea>
+            <textarea id="systemPrompt" rows="5"></textarea>
         </div>
 
-        <!-- Search Input -->
+        <!-- Search -->
         <div class="search-section">
             <textarea
                 id="queryInput"
-                placeholder="Enter your search query... (Shift+Enter for new line)"
+                placeholder="Enter your search query..."
                 rows="3"
             ></textarea>
 
             <div class="search-controls">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="useHybrid" checked>
-                    Hybrid Search
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="useReranking" checked>
-                    Reranking
-                </label>
-                <label class="number-label">
-                    Results:
+                <label><input type="checkbox" id="useHybrid" checked> Hybrid</label>
+                <label><input type="checkbox" id="useReranking" checked> Reranking</label>
+                <label>Results:
                     <input type="number" id="numResults" value="5" min="1" max="20">
                 </label>
             </div>
 
-            <button id="searchButton" onclick="performSearch()">Search</button>
+            <div style="display:flex; gap:8px;">
+                <button id="searchButton" onclick="performSearch()">Search</button>
+                <button id="previewPromptButton" onclick="showPromptPreview()">Preview Prompt</button>
+            </div>
         </div>
 
-        <!-- Metrics Display -->
+        <!-- Metrics -->
         <div class="metrics-section">
             <div class="metric">
                 <span class="metric-label">Method</span>
@@ -94,11 +79,11 @@ Seattle University, ARIN 5360
         </div>
     </div>
 
-    <!-- RIGHT PANEL: Results Display -->
+    <!-- RIGHT PANEL -->
     <div class="panel results-panel">
         <div class="panel-header">
             <h2>Results</h2>
-            <button id="exportButton" onclick="exportResults()">Export JSON</button>
+            <button onclick="exportResults()">Export JSON</button>
         </div>
         <div id="results" class="results-list">
             <div class="empty-state">Enter a query to search</div>
@@ -106,7 +91,20 @@ Seattle University, ARIN 5360
     </div>
 </div>
 
-<script src="search.js"></script>
+<!-- PROMPT PREVIEW MODAL -->
+<dialog id="promptPreviewModal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0;">Full Prompt Preview</h3>
+        <button onclick="closePromptPreview()">✕</button>
+    </div>
 
+    <div id="promptPreviewBody" style="margin-top:12px;"></div>
+
+    <div style="margin-top:12px; text-align:right;">
+        <button onclick="closePromptPreview()">Close</button>
+    </div>
+</dialog>
+
+<script src="search.js"></script>
 </body>
 </html>

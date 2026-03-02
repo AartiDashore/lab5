@@ -73,46 +73,65 @@ class RAGResponse(BaseModel):
     answer: str
     context: list[dict]
     context_count: int
+    full_prompt: str  # Q12: full prompt preview support
+
+
+def build_full_prompt(system_prompt: str, question: str, sources: list[dict]) -> str:
+    """
+    Build the exact prompt string the backend intends to send to the LLM.
+    This keeps prompt-preview formatting consistent with server behavior.
+    """
+    context_blocks = []
+    for i, src in enumerate(sources, start=1):
+        # Be resilient to different source shapes
+        meta = src.get("metadata") or {}
+        source_name = meta.get("source") or src.get("id") or f"Doc {i}"
+        text = src.get("text") or ""
+        context_blocks.append(f"--- [{i}] {source_name} ---\n{text}")
+
+    context_str = "\n\n".join(context_blocks) if context_blocks else "(no context retrieved)"
+
+    return (
+        "SYSTEM:\n"
+        f"{system_prompt}\n\n"
+        "CONTEXT DOCUMENTS:\n"
+        f"{context_str}\n\n"
+        "USER QUESTION:\n"
+        f"{question}"
+    )
 
 
 # Define lifespan function to load models on startup
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Code before the 'yield' is executed during application startup
     try:
         logger.info("Loading models...")
 
-        # Index documents from the documents/ directory
         global retriever, rag_system
         retriever = DocumentRetriever()
         docs_dir = "tests/data" if "PYTEST_CURRENT_TEST" in os.environ else "documents"
         num_docs = retriever.index_documents(docs_dir)
         logger.info(f"Indexed {num_docs} chunks successfully!")
 
-        # Initialize RAG system with LLM client
         llm_client = LLMClient(model="qwen2.5:3b", timeout=120.0)
         rag_system = RAGSystem(retriever=retriever, llm_client=llm_client)
         logger.info("RAG system initialized.")
 
     except Exception as e:
-        # Don't crash the server, but log the error
         logger.error(f"Failed to load model: {str(e)}")
 
-    yield  # The application starts receiving requests after the yield
+    yield
 
-    # Code after the 'yield' is executed during application shutdown
     logger.info("Application shutting down (lifespan)...")
 
 
-# Initialize FastAPI app
 app = FastAPI(
-    title="FIXME: API Title",
-    description="Lab3: Semantic search system using ChromaDB and sentence transformers",
-    version="1.0.0",
+    title="Lab 5 Document Retrieval API",
+    description="Semantic + Hybrid Search with optional reranking; RAG endpoint with system prompt support.",
+    version="2.0.0+w26",
     lifespan=lifespan,
 )
 
-# Add cross-origin resource sharing (CORS) middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -168,14 +187,22 @@ async def rag_query(request: RAGRequest):
             question=request.question,
             n_results=request.n_context_docs,
             temperature=request.temperature,
-            system_prompt=request.system_prompt,  # Q11: pass custom system prompt
+            system_prompt=request.system_prompt,
         )
+
+        # result["sources"] is what you show/cite in UI, and what we use to build full prompt
+        sources = result.get("sources", [])
+        system_prompt_used = (
+            request.system_prompt or ""
+        )  # optional; depends on your rag_system defaulting
+        full_prompt = build_full_prompt(system_prompt_used, request.question, sources)
 
         return RAGResponse(
             question=result["question"],
             answer=result["answer"],
-            context=result["sources"],
+            context=sources,
             context_count=result["n_docs_retrieved"],
+            full_prompt=full_prompt,
         )
 
     except RuntimeError as e:
@@ -196,11 +223,13 @@ async def health_check():
             documents_indexed=0,
             rag_available=False,
         )
+
+    # rag_available should reflect the RAG system actually being initialized
     return HealthResponse(
         status="healthy",
         message="API is running and ready",
         documents_indexed=retriever.document_count,
-        rag_available=retriever.document_count > 0,
+        rag_available=(rag_system is not None and retriever.document_count > 0),
     )
 
 
@@ -216,7 +245,6 @@ async def test_error():
     raise RuntimeError("Something went wrong")
 
 
-# Mount static files LAST
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":

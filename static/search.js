@@ -306,3 +306,62 @@ function exportResults() {
 
     URL.revokeObjectURL(url);
 }
+
+// ===== PROMPT PREVIEW =====
+
+function formatContextDocs(results) {
+    if (!results || results.length === 0) return "(no context retrieved)";
+    return results.map((r, i) => {
+        const source = r.metadata?.source || r.id || `Doc ${i+1}`;
+        return `--- [${i+1}] ${source} ---\n${r.text}`;
+    }).join("\n\n");
+}
+
+function addPromptSection(container, title, text) {
+    const section = document.createElement("div");
+    section.style.marginBottom = "12px";
+
+    const h = document.createElement("h4");
+    h.textContent = title;
+    h.style.margin = "0 0 6px 0";
+
+    const pre = document.createElement("pre");
+    pre.textContent = text;
+    pre.style.whiteSpace = "pre-wrap";
+    pre.style.background = "#f6f8fa";
+    pre.style.padding = "10px";
+    pre.style.borderRadius = "8px";
+    pre.style.border = "1px solid #ddd";
+
+    section.appendChild(h);
+    section.appendChild(pre);
+    container.appendChild(section);
+}
+
+function showPromptPreview() {
+    const modal = document.getElementById("promptPreviewModal");
+    const body = document.getElementById("promptPreviewBody");
+
+    const systemPrompt = getSystemPrompt();
+    const question = document.getElementById("queryInput").value.trim();
+    const context = formatContextDocs(currentResults);
+
+    body.innerHTML = "";
+
+    addPromptSection(body, "System Prompt", systemPrompt);
+    addPromptSection(body, "Context Documents", context);
+    addPromptSection(body, "User Question", question);
+
+    const finalPrompt =
+        "SYSTEM:\n" + systemPrompt +
+        "\n\nCONTEXT DOCUMENTS:\n" + context +
+        "\n\nUSER QUESTION:\n" + question;
+
+    addPromptSection(body, "Final Prompt (sent to LLM)", finalPrompt);
+
+    modal.showModal();
+}
+
+function closePromptPreview() {
+    document.getElementById("promptPreviewModal").close();
+}
