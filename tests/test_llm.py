@@ -1,5 +1,5 @@
 """Tests for the LLM client module using mocked HTTP requests.
-@author: Aarti Dashore
+@author: Aarti Dashore, Sebastian Silva Arcos
 Seattle University, ARIN 5360
 @see: https://catalog.seattleu.edu/preview_course_nopop.php?catoid=55&coid
 =190380
