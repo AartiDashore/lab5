@@ -1,26 +1,41 @@
 [![CI](https://github.com/AartiDashore/lab5/actions/workflows/ci.yml/badge.svg)](https://github.com/AartiDashore/lab5/actions/workflows/ci.yml)
-# Lab 5: CI/CD Pipeline & Web Interface
 
-This lab extends the document retrieval system with an automated CI/CD pipeline.
+# Lab 6: RAG System with Ollama
+This lab extends the document retrieval system from Lab 5 into a full Retrieval-Augmented Generation (RAG) pipeline. It integrates a local LLM via Ollama to answer questions grounded in your indexed documents, and adds an interactive LLM Playground interface for prompt engineering.
+
+
+Lab 5: CI/CD Pipeline & Web Interface
+
+The lab extends the document retrieval system with an automated CI/CD pipeline as well.
 Interactive Github actions are used to enforce code quality and reliability.
 This is done by automated testing and linting.
 The web interface provides a expanded front end for submitting queries and viewing and exporting retrieval results.
 
 ## Feature Progression
 
-| Feature | Lab 3 | Lab 4 | P2 |
-|---------|-------|-------|-----|
-| **Text file support** | ✅ | ✅ | ✅ |
-| **PDF support** | ❌ | ✅ | ✅ |
-| **Document chunking** | ❌ | ✅ | ✅ |
-| **Semantic search** | ✅ | ✅ | ✅ |
-| **Cross-encoder reranking** | ❌ | ❌ | ✅ |
-| **Keyword search (BM25)** | ❌ | ❌ | ✅* |
-| **Hybrid search (RRF)** | ❌ | ❌ | ✅* |
+| Feature | Lab 3 | Lab 4 | P2 | Lab 5 | Lab 6 |
+|---------|-------|-------|-----|-------|-----|
+| **Text file support** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **PDF support** | ❌ | ✅ | ✅ | ✅ | ✅ |
+| **Document chunking** | ❌ | ✅ | ✅ | ✅ | ✅ |
+| **Semantic search** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Cross-encoder reranking** | ❌ | ❌ | ✅ | ✅ | ✅ |
+| **Hybrid search (RRF+BM25)** | ❌ | ❌ | ✅* | ✅* | ✅* |
+| **CI/CD Pipeline** | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **RAG with LLM** | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **LLM Playground UI** | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 
-### New Features in Lab 5
+### New Features in Lab 6
 
+- RAG Pipeline: Retrieves relevant documents and generates answers using a local LLM
+- Ollama Integration: Runs LLMs locally via Ollama (no API key required)
+- LLM Playground: Interactive UI for experimenting with prompts and RAG parameters
+- /rag Endpoint: New FastAPI endpoint returning answers with source citations
+- Health Check Update: /health now reports LLM availability via rag_available
+- Mocked LLM Tests: CI-compatible tests using unittest.mock — no real LLM needed
+
+### Features in Lab 5
 
 - **CI/CD Pipeline**: GitHub Actions workflow automatically runs Ruff linting/format checks and pytest on each push and pull request
 - **Web Interface**: Browser-based UI for submitting queries and viewing ranked retrieval results
@@ -56,11 +71,32 @@ The web interface provides a expanded front end for submitting queries and viewi
 # Install dependencies
 uv sync
 ```
+### Ollama Setup
 
-### Environment Variables
+- Install Ollama: Download from https://ollama.com
+- Pull a model (choose one based on your hardware):
+
+```bash
+   ollama pull qwen2.5:3b       # Recommended (default)
+   ollama pull qwen2.5:0.5b     # Smaller, faster
+   ollama pull llama3.2:1b      # Alternative
+```
+
+Verify Ollama is running:
+
+```bash
+   ollama list                  # See available models
+   ollama run qwen2.5:3b "hello"  # Quick test
+```
+
+Ollama runs automatically in the background after installation. The default endpoint is http://localhost:11434.
+
+# Example Queries:
+![playground_interface](images/lab6_playground_interface.png)
 
 
-
+# Code Coverage:
+![code_coverage](images/lab6_code_coverage.png)
 
 ### Checking Out Assignment Code
 
@@ -82,10 +118,26 @@ uv run uvicorn src.retrieval.main:app --reload
 ```
 
 Server starts at http://localhost:8000
+Search Interface: http://localhost:8000/
+LLM Playground: http://localhost:8000/playground.html
+Health Check: http://localhost:8000/health
+API Docs: http://localhost:8000/docs
 
 ## Usage
 
 **Web Interface:** Visit http://localhost:8000
+
+Search Interface — http://localhost:8000/
+Basic semantic search from Lab 5 (unchanged).
+LLM Playground — http://localhost:8000/playground.html
+Interactive RAG interface with:
+
+Context documents slider (1–10)
+Temperature slider (0.0–1.0)
+Editable system prompt with localStorage persistence
+Full prompt preview modal
+Answer display with citation highlighting
+Expandable source document cards
 
 **API:**
 ```bash
@@ -212,15 +264,20 @@ lab5/
 │   ├── loader.py          # Document loader
 │   ├── store.py           # Vector store
 │   ├── retriever.py       # Main retriever
-│   ├── reranker.py        # NEW: Document reranker
-│   ├── hybrid.py          # NEW: Hybrid searcher
-│   └── main.py            # FastAPI application
+│   ├── reranker.py        # Document reranker
+│   ├── hybrid.py          # Hybrid searcher
+│   ├── llm.py             # NEW: LLM client (Ollama/OpenAI)
+│   ├── rag.py             # NEW: RAG pipeline
+│   └── main.py            # FastAPI application (updated)
 ├── tests/                 # Test files
-│   ├── test_reranker.py   # NEW: Reranker tests
-│   ├── test_hybrid.py     # NEW: Hybrid search tests
-│   ├── test_p2_reranking.py│   ├── test_p2_hybrid.py
+│   ├── test_reranker.py   
+│   ├── test_hybrid.py     
+│   ├── test_llm.py        # NEW: LLM client (Ollama/OpenAI)
+│   ├── test_rag.py        # NEW: RAG pipeline
+│   ├── test_p2_reranking.py
+│   ├── test_p2_hybrid.py
 │   ├── ...
-│   └── data/              # NEW: documents used in tests
+│   └── data/              
 ├── static/
 │   ├── index.html # ENHANCED
 │   ├── search.js  # NEW
@@ -232,10 +289,28 @@ lab5/
 
 ## Architecture
 
+### RAG Pipeline
+```
+User Question
+     ↓
+1. Retrieve relevant docs  (DocumentRetriever.search())
+     ↓
+2. Build context string    (RAGSystem._build_context())
+     ↓
+3. Create prompt           (RAGSystem._create_prompt())
+     ↓
+4. Generate answer         (LLMClient.generate() → Ollama)
+     ↓
+Answer + Sources
+```
+
 ### Core Components (from Labs 5)
 - **Loader**: Handles .txt and .pdf files with intelligent chunking
 - **Embedder**: Bi-encoder for initial semantic search (all-MiniLM-L6-v2)
 - **Store**: ChromaDB for efficient vector search
+- **LLMClient (llm.py)**: HTTP client supporting Ollama and OpenAI-compatible APIs
+- **RAGSystem (rag.py)**: Orchestrates the full RAG pipeline
+- **Playground (playground.html)**: Interactive prompt engineering UI
 
 
 ## Retrieval Pipeline
